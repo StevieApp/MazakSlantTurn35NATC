@@ -1,1 +1,120 @@
-Const SpindleTrue = 39Const InSoft = 6OutUnmesh = 10OutSpindleReset = 9OutMesh = 11OutLubricant = 6Const TailCouple = 1820ZPositionLastCouple = 1821LastCouple = GetUserDRO(ZPositionLastCouple)Const InFree = 3Const InHigh = 6Const InLow = 4Const InNormal = 5Call DoAfterEstop()Sub DoAfterEstop()	While GetOEMDRO(SpindleTrue)>0		Message "Spindle Still Running..."	Wend	Sleep(1000)	Call Mesh()End SubSub Mesh	If GetCsmioIn(InLow) Then		Call DoFree()		Call DoHard()	ElseIf  GetCsmioIn(InHigh) Then		Call DoFree()		Call DoSoft()	ElseIf  GetCsmioIn(InFree) Then		Call DoFree()	ElseIf  GetCsmioIn(InNormal) Then		Call DoFree()		Call DoNormal()	Else		Call DoFree()		Call DoNormal()	End If	Call TailStateReturn()	Call OilMachine()End SubSub DoFree	If RunScript("freegear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoHard	If RunScript("hardgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoSoft	If RunScript("softgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoNormal	If RunScript("normalgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub TailStateReturn()	If GetUserDRO(TailCouple) = 0 Then		DeactivateSignal(Output4)		Message "TailStock decoupled. Last known position is " & LastCouple	ElseIf GetUserDRO(TailCouple) = -1 Then		ActivateSignal(Output4)		Message "TailStock recoupled"	Else            Message "No preset value retrieved/UserDro used for another function"	End IfEnd SubSub OilMachine()	Call SetCsmioOutEx(OutLubricant, True)End SubPublic Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(90, n)	Else		ResetOutBit(90, n)	End IfEnd Sub   Public Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(100, n)	Else		ResetOutBit(100, n)	End IfEnd Sub   Public Function GetCsmioIn(n As Integer) As Boolean	Dim reg As Integer	If(n<16) Then		reg = 90	Else		reg = 91		n = n-16	End If	If(GetInBit(reg, n)) Then		GetCsmioIn = true	Else		GetCsmioIn = False	End If	Exit FunctionEnd Function 
+Const SpindleTrue = 39
+
+Const InSoft = 6
+OutUnmesh = 10
+OutSpindleReset = 9
+OutMesh = 11
+OutLubricant = 6
+Const TailCouple = 1820
+ZPositionLastCouple = 1821
+LastCouple = GetUserDRO(ZPositionLastCouple)
+Const InFree = 3
+Const InHigh = 6
+Const InLow = 4
+Const InNormal = 5
+
+Call DoAfterEstop()
+
+Sub DoAfterEstop()
+	While GetOEMDRO(SpindleTrue)>0
+		Message "Spindle Still Running..."
+	Wend
+	Sleep(1000)
+	Call Mesh()
+End Sub
+
+Sub Mesh
+	If GetCsmioIn(InLow) Then
+		Call DoFree()
+		Call DoHard()
+	ElseIf  GetCsmioIn(InHigh) Then
+		Call DoFree()
+		Call DoSoft()
+	ElseIf  GetCsmioIn(InFree) Then
+		Call DoFree()
+	ElseIf  GetCsmioIn(InNormal) Then
+		Call DoFree()
+		Call DoNormal()
+	Else
+		Call DoFree()
+		Call DoNormal()
+	End If
+	Call TailStateReturn()
+	Call OilMachine()
+End Sub
+
+Sub DoFree
+	If RunScript("freegear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoHard
+	If RunScript("hardgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoSoft
+	If RunScript("softgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoNormal
+	If RunScript("normalgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub TailStateReturn()
+	If GetUserDRO(TailCouple) = 0 Then
+		DeactivateSignal(Output4)
+		Message "TailStock decoupled. Last known position is " & LastCouple
+	ElseIf GetUserDRO(TailCouple) = -1 Then
+		ActivateSignal(Output4)
+		Message "TailStock recoupled"
+	Else
+            Message "No preset value retrieved/UserDro used for another function"
+	End If
+End Sub
+
+Sub OilMachine()
+	Call SetCsmioOutEx(OutLubricant, True)
+End Sub
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub   
+
+Public Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(100, n)
+	Else
+		ResetOutBit(100, n)
+	End If
+End Sub   
+
+Public Function GetCsmioIn(n As Integer) As Boolean
+	Dim reg As Integer
+	If(n<16) Then
+		reg = 90
+	Else
+		reg = 91
+		n = n-16
+	End If
+	If(GetInBit(reg, n)) Then
+		GetCsmioIn = true
+	Else
+		GetCsmioIn = False
+	End If
+	Exit Function
+End Function 
