@@ -1,1 +1,186 @@
-OutMesh = 11OutBrakeRelease = 7OutBrakeChuck = 12OutUnmesh = 10OutSpindleReset = 9Const SpindleTrue = 39Const InUnMeshed = 3Const InReset = 4Const InMeshed = 5Const InMeshState = 6Const ReqSpeedDRO = 202Const FactorDRO = 74Const InHigh = 6Const InLow = 4Const InNormal = 5''Call Unmesh()''Call Mesh()Call StartCW()''DoSpinCW()''Dim UnMeshed, ResetState, MeshStatus, Meshed''	UnMeshed = GetCsmioIn(InUnMeshed)''	ResetState = GetCsmioIn(InReset)''	MeshStatus = GetCsmioIn(InMeshState)''	Meshed = GetCsmioIn(InMeshed)''	If Unmeshed = True Or ResetState = True Or MeshStatus = True Or Meshed = False Then''		Call BrakeRelease()''		Call Unmesh()''		Call Mesh()''Else''DoSpinCW()''End IfSub StartCW	Dim RequestedSpeed 	RequestedSpeed = 100*(GetOEMDRO(ReqSpeedDRO)/GetOEMDRO(FactorDRO))	Message "Speed Requested " & RequestedSpeed	If (RequestedSpeed>0 And RequestedSpeed<=501) Then		If GetCsmioIn(InLow) = True Then			DoSpinCW()		Else			SetSpinSpeed(0)			Sleep(1000)			While GetOEMDRO(SpindleTrue)>0				Message "Spindle Still Running..."			Wend			DoSpinStop()			Sleep(1000)			Call DoFree()			Call DoHard()			Sleep(1000)			DoSpinCW()			SetSpinSpeed(RequestedSpeed)		End If	ElseIf (RequestedSpeed>500 And RequestedSpeed<=1001) Then		If  GetCsmioIn(InNormal) = True And GetCsmioIn(InHigh) = False And GetCsmioIn(InLow) = False Then			DoSpinCW()		Else			SetSpinSpeed(0)			Sleep(1000)			While GetOEMDRO(SpindleTrue)>0				Message "Spindle Still Running..."			Wend			DoSpinStop()			Sleep(1000)			Call DoFree()			Call DoNormal()			Sleep(1000)			DoSpinCW()			SetSpinSpeed(RequestedSpeed)		End If	ElseIf (RequestedSpeed>1000 And RequestedSpeed<=3000) Then		If  GetCsmioIn(InHigh) = True Then			DoSpinCW()		Else			SetSpinSpeed(0)			Sleep(1000)			While GetOEMDRO(SpindleTrue)>0				Message "Spindle Still Running..."			Wend 			DoSpinStop()			Sleep(1000)			Call DoFree()			Call DoSoft()			Sleep(1000)			DoSpinCW()			SetSpinSpeed(RequestedSpeed)		End If	Else		Message "Speed Requested too high or too low"	End If	''DoSpinCW()End SubSub DoFree	If RunScript("freegear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoHard	If RunScript("hardgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoSoft	If RunScript("softgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub DoNormal	If RunScript("normalgear") < 0 then  		Message "Issue with freegear script." 	Else 	End IfEnd SubSub Mesh	Message "Meshing..."	Call SetCsmioOut(OutSpindleReset, True)	Sleep(1200)	Call SetCsmioOut(OutSpindleReset, False)	Sleep(100)	Call SetCsmioOut(OutMesh, True)	Sleep(3200)	Call SetCsmioOut(OutMesh, False)	Message "Meshed."End SubSub BrakeRelease	Call SetCsmioOut(OutBrakeRelease, True)	Sleep(2200)	Call SetCsmioOut(OutBrakeRelease, False)End SubSub Unmesh	Call SetCsmioOut(OutSpindleReset, True)	Sleep(2200)	Call SetCsmioOut(OutSpindleReset, False)	Sleep(100)	Call SetCsmioOut(OutUnmesh, True)	Sleep(3200)	Call SetCsmioOut(OutUnmesh, False)End SubPublic Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(90, n)	Else		ResetOutBit(90, n)	End IfEnd SubPublic Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(100, n)	Else		ResetOutBit(100, n)	End IfEnd Sub   Public Function GetCsmioIn(n As Integer) As Boolean	Dim reg As Integer	If(n<16) Then		reg = 90	Else		reg = 91		n = n-16	End If	If(GetInBit(reg, n)) Then		GetCsmioIn = true	Else		GetCsmioIn = False	End If	Exit FunctionEnd Function        
+OutMesh = 11
+OutBrakeRelease = 7
+OutBrakeChuck = 12
+OutUnmesh = 10
+OutSpindleReset = 9
+
+Const SpindleTrue = 39
+
+Const InUnMeshed = 3
+Const InReset = 4
+Const InMeshed = 5
+Const InMeshState = 6
+Const ReqSpeedDRO = 202
+Const FactorDRO = 74
+
+Const InHigh = 6
+Const InLow = 4
+Const InNormal = 5
+
+
+''Call Unmesh()
+''Call Mesh()
+Call StartCW()
+''DoSpinCW()
+''Dim UnMeshed, ResetState, MeshStatus, Meshed
+''	UnMeshed = GetCsmioIn(InUnMeshed)
+''	ResetState = GetCsmioIn(InReset)
+''	MeshStatus = GetCsmioIn(InMeshState)
+''	Meshed = GetCsmioIn(InMeshed)
+''	If Unmeshed = True Or ResetState = True Or MeshStatus = True Or Meshed = False Then
+''		Call BrakeRelease()
+''		Call Unmesh()
+''		Call Mesh()
+''Else
+''DoSpinCW()
+''End If
+
+Sub StartCW
+	Dim RequestedSpeed 
+	RequestedSpeed = 100*(GetOEMDRO(ReqSpeedDRO)/GetOEMDRO(FactorDRO))
+	Message "Speed Requested " & RequestedSpeed
+	If (RequestedSpeed>0 And RequestedSpeed<=501) Then
+		If GetCsmioIn(InLow) = True Then
+			DoSpinCW()
+		Else
+			SetSpinSpeed(0)
+			Sleep(1000)
+			While GetOEMDRO(SpindleTrue)>0
+				Message "Spindle Still Running..."
+			Wend
+			DoSpinStop()
+			Sleep(1000)
+			Call DoFree()
+			Call DoHard()
+			Sleep(1000)
+			DoSpinCW()
+			SetSpinSpeed(RequestedSpeed)
+		End If
+	ElseIf (RequestedSpeed>500 And RequestedSpeed<=1001) Then
+		If  GetCsmioIn(InNormal) = True And GetCsmioIn(InHigh) = False And GetCsmioIn(InLow) = False Then
+			DoSpinCW()
+		Else
+			SetSpinSpeed(0)
+			Sleep(1000)
+			While GetOEMDRO(SpindleTrue)>0
+				Message "Spindle Still Running..."
+			Wend
+			DoSpinStop()
+			Sleep(1000)
+			Call DoFree()
+			Call DoNormal()
+			Sleep(1000)
+			DoSpinCW()
+			SetSpinSpeed(RequestedSpeed)
+		End If
+	ElseIf (RequestedSpeed>1000 And RequestedSpeed<=3000) Then
+		If  GetCsmioIn(InHigh) = True Then
+			DoSpinCW()
+		Else
+			SetSpinSpeed(0)
+			Sleep(1000)
+			While GetOEMDRO(SpindleTrue)>0
+				Message "Spindle Still Running..."
+			Wend 
+			DoSpinStop()
+			Sleep(1000)
+			Call DoFree()
+			Call DoSoft()
+			Sleep(1000)
+			DoSpinCW()
+			SetSpinSpeed(RequestedSpeed)
+		End If
+	Else
+		Message "Speed Requested too high or too low"
+	End If
+	''DoSpinCW()
+End Sub
+
+Sub DoFree
+	If RunScript("freegear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoHard
+	If RunScript("hardgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoSoft
+	If RunScript("softgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub DoNormal
+	If RunScript("normalgear") < 0 then 
+ 		Message "Issue with freegear script." 
+	Else 
+	End If
+End Sub
+
+Sub Mesh
+	Message "Meshing..."
+	Call SetCsmioOut(OutSpindleReset, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutSpindleReset, False)
+	Sleep(100)
+	Call SetCsmioOut(OutMesh, True)
+	Sleep(3200)
+	Call SetCsmioOut(OutMesh, False)
+	Message "Meshed."
+End Sub
+
+Sub BrakeRelease
+	Call SetCsmioOut(OutBrakeRelease, True)
+	Sleep(2200)
+	Call SetCsmioOut(OutBrakeRelease, False)
+End Sub
+
+Sub Unmesh
+	Call SetCsmioOut(OutSpindleReset, True)
+	Sleep(2200)
+	Call SetCsmioOut(OutSpindleReset, False)
+	Sleep(100)
+	Call SetCsmioOut(OutUnmesh, True)
+	Sleep(3200)
+	Call SetCsmioOut(OutUnmesh, False)
+End Sub
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub
+
+Public Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(100, n)
+	Else
+		ResetOutBit(100, n)
+	End If
+End Sub   
+
+
+Public Function GetCsmioIn(n As Integer) As Boolean
+	Dim reg As Integer
+	If(n<16) Then
+		reg = 90
+	Else
+		reg = 91
+		n = n-16
+	End If
+	If(GetInBit(reg, n)) Then
+		GetCsmioIn = true
+	Else
+		GetCsmioIn = False
+	End If
+	Exit Function
+End Function        
