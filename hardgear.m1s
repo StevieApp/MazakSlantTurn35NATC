@@ -1,0 +1,32 @@
+Const SpindleTrue = 39
+Const SpindleOveride = 74
+ConstSpindleMax = 57
+If GetOEMDRO(SpindleTrue)>0 Then
+	Message "Spindle Still Running..."
+	End
+End If
+
+OutUnmesh = 10
+OutSpindleReset = 9
+OutMesh = 11
+
+Call Mesh()
+
+Sub Mesh
+	DoSpinStop()
+	Message "Going to Low Speed Mode..."
+	Call SetCsmioOut(OutSpindleReset, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutSpindleReset, False)
+	Message "Low Speed Mode Set"
+	SetOEMDRO(SpindleOveride, 181)
+	SetOEMDRO(SpindleMax, 950)
+End Sub
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub 

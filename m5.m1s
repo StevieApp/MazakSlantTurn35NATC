@@ -1,0 +1,18 @@
+Const SpindleTrue = 39
+Const ReqSpeedDRO = 202
+Const FactorDRO = 74
+
+
+Sub Stopper
+	Dim RequestedSpeed 
+	RequestedSpeed = 100*(GetOEMDRO(ReqSpeedDRO)/GetOEMDRO(FactorDRO))
+	SetSpinSpeed(0)
+	Sleep(1000)
+	While GetOEMDRO(SpindleTrue)>0
+		Message "Spindle Slowing Down..."
+	Wend
+	DoSpinStop()
+	Message "Spindle stopped."
+	SetSpinSpeed(RequestedSpeed)
+End Sub
+

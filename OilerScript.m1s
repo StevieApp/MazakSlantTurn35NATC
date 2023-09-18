@@ -1,0 +1,1 @@
+OutLubricant = 6''Message "Lubricating..."''Sleep(1000)Call SetCsmioOutEx(OutLubricant, True)''Sleep(30000)''Call SetCsmioOutEx(OutLubricant, False)''Message "Lubricated."Public Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(100, n)	Else		ResetOutBit(100, n)	End IfEnd Sub 

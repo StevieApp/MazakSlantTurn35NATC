@@ -1,0 +1,32 @@
+Const SpindleTrue = 39
+If GetOEMDRO(SpindleTrue)>0 Then
+	Message "Spindle Still Running..."
+	End
+End If
+
+OutUnmesh = 10
+OutSpindleReset = 9
+OutMesh = 11
+
+Call Mesh()
+
+Sub Mesh
+	DoSpinStop()
+	Message "Resetting..."
+	Call SetCsmioOut(OutSpindleReset, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutSpindleReset, False)
+	Message "Going to free gear..."
+	Call SetCsmioOut(OutUnmesh, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutUnmesh, False)
+	Message "Free Gear Set"
+End Sub
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub   

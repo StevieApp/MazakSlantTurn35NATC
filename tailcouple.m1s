@@ -1,0 +1,19 @@
+If (GetOEMLED(809) Or GetOEMLED(807)) Then
+	Message "Please Home Machine First"
+	End
+Else
+End If
+Const TailCouple = 1820
+Const ZPositionLastCouple = 1821
+Const Zaxis = 2
+If IsOutputActive(Output4) = True Then
+	DeactivateSignal(Output4)
+      SetUserDRO(TailCouple, 0)
+      SetUserDRO(ZPositionLastCouple, GetABSPosition(Zaxis))
+	LastCouple = GetUserDRO(ZPositionLastCouple)
+	Message "TailStock decoupled. Last known position is " & LastCouple
+Else 
+	ActivateSignal(Output4)
+      SetUserDRO(TailCouple, -1)
+      SetUserDRO(ZPositionLastCouple, -2000)
+End If

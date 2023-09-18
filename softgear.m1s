@@ -1,0 +1,57 @@
+Const SpindleTrue = 39
+Const SpindleOveride = 74
+Const SpindleMax = 57
+If GetOEMDRO(SpindleTrue)>0 Then
+	Message "Spindle Still Running..."
+	End
+End If
+
+OutUnmesh = 10
+OutSpindleReset = 9
+OutMesh = 11
+Const InSoft = 6
+
+Call Mesh()
+
+Sub Mesh
+	Message "Resetting..."
+	Call SetCsmioOut(OutSpindleReset, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutSpindleReset, False)
+	Message "Going to free gear..."
+	Call SetCsmioOut(OutUnmesh, True)
+	Sleep(1200)
+	Call SetCsmioOut(OutUnmesh, False)
+	Message "Going to High Speed Mode..."
+	Call SetCsmioOut(OutMesh, True)
+	While Not GetCsmioIn(InSoft)
+	Wend
+	Call SetCsmioOut(OutMesh, False)
+	Message "High Speed Mode Set"
+	SetOEMDRO(SpindleOveride, 33.8)
+	SetOEMDRO(SpindleMax, 1080)
+End Sub
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub
+
+Public Function GetCsmioIn(n As Integer) As Boolean
+	Dim reg As Integer
+	If(n<16) Then
+		reg = 90
+	Else
+		reg = 91
+		n = n-16
+	End If
+	If(GetInBit(reg, n)) Then
+		GetCsmioIn = true
+	Else
+		GetCsmioIn = False
+	End If
+	Exit Function
+End Function
