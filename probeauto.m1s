@@ -1,1 +1,356 @@
-If (GetOEMLED(809) Or GetOEMLED(807)) Then	Message "Please Home Machine First"	EndElseEnd IfConst InTool1 = 12OutProbeClose = 1Const InTool2 = 13Const InTool3 = 14Const InTool4 = 15Const ProbeOpen = 23ProbeOriginX = -250ProbeOriginZ = -250OpenProbe = 0Xaxis = 0 Zaxis = 2XOffsetParam = 3ZOffsetParam = 4MachMsgTypeYesNo = 4MachMsgReturnYes = 6 MachMsgReturnNo = 7Comb = GetCombination()TNum = SwCaseReverse(Comb)SetCurrentTool(TNum)Tool = GetCurrentTool()''Call StartProbe()''Call looper(2201)''Message "X Offset" & GetUserDRO(2004)-ProbeOriginX & "Z Offset" & GetUserDRO(1904)-ProbeOriginZCall GoToProbePosition()Sub GoToProbePosition()	XPositionStartDRO = 1800+Tool	ZPositionStartDRO = 1900+Tool	XPositionStart = GetUserDRO(XPositionStartDRO)	ZPositionStart = GetUserDRO(ZPositionStartDRO)	If(XPositionStart = 0 Or ZPositionStart = 0) Then		Message "Tool has no preset position. Do this for new/changed/unset tools or changed tools"	Else 		Code "G53 G00 Z"&(ZPositionStart+70)		Code "G53 G00 X"&XPositionStart		While(IsMoving())		Wend		''MachMsg("Done to probe origin", "Waduheck", 0)		Call StartProbe()	End IfEnd SubSub looper(start)	mytarget = start+15	For i = start To mytarget        	Message i & "m" & GetUserDRO(i)        	sleep(1000)	Next iEnd SubSub StartProbe()	Response = MachMsg ("Have you set the tool atleast 15cm from the probe?", "Alert", MachMsgTypeYesNo)	If(Response = MachMsgReturnYes) Then		Message "Starting probe for tool " & Tool & "..."		If(GetCsmioIn(ProbeOpen) = False) Then			Call SetCsmioOutEx(OpenProbe, True)			While(GetCsmioIn(ProbeOpen) = False)			Wend			Call SetCsmioOutEx(OpenProbe, False)			Sleep(300)		Else		End If		''Message "Machine X " & GetABSPosition(Xaxis) & " Machine Z" & GetABSPosition(Zaxis)		XCoordStart = GetDro(0)		ZCoordStart = GetDro(2)		XMachCoordStart = GetABSPosition(Xaxis)		ZMachCoordStart = GetABSPosition(Zaxis)		''Do Z		ZPushTo = ZCoordStart - 5000		MyGCode = "G31 X" & XCoordStart & " Z" & ZPushTo &" F200"		Code MyGCode		While(IsMoving())		Wend		Code "G53 G00 Z"&(GetABSPosition(Zaxis)+2)		While(IsMoving())		Wend		Code "G31 X" & XCoordStart & " Z" & ZPushTo &" F5"		While(IsMoving())		Wend		SetToolZ(0.0000)		DROXForZ = 1800+Tool		DROZForZ = 1900+Tool		SetUserDRO(DROXForZ, GetABSPosition(Xaxis))		SetUserDRO(DROZForZ, GetABSPosition(Zaxis))		ZOffset = GetUserDRO(DROZForZ)-ProbeOriginZ		SetToolParam(Tool, ZOffsetParam, ZOffset) 		Code "G53 G00 Z"&(GetABSPosition(Zaxis)+15)		While(IsMoving())		Wend		''Do X		Boring = GetUserDRO((2200+Tool))		''Response = MachMsg ("Is this a boring tool?", "Alert", MachMsgTypeYesNo)		If(Boring = 1) Then			Code "G53 G00 X"&(GetABSPosition(Xaxis)-40)			While(IsMoving())			Wend			Code "G53 G00 Z"&(GetABSPosition(Zaxis)-35)			While(IsMoving())			Wend			XPushTo = GetDro(0) + 5000			Code "G31 X" & XPushTo &" F200"			While(IsMoving())			Wend			Code "G53 G00 X"&(GetABSPosition(Xaxis)-3)			While(IsMoving())			Wend			Code "G31 X" & XPushTo &" F5"			While(IsMoving())			Wend			SetToolX(0.0000)			DROXForX = 2000+Tool			DROZForX = 2100+Tool			DROForBoring = 2200+Tool			SetUserDRO(DROXForX, GetABSPosition(Xaxis))			SetUserDRO(DROZForX, GetABSPosition(Zaxis))			SetUserDRO(DROForBoring, 1)			XOffset = GetUserDRO(DROXForX)-ProbeOriginZ+20			SetToolParam(Tool, XOffsetParam, XOffset) 			Code "G53 G00 X"&(GetABSPosition(Xaxis)-25)			While(IsMoving())			Wend			Code "G53 G00 Z"&(GetABSPosition(Zaxis)+25)			While(IsMoving())			Wend			Code "G53G00 X" & XMachCoordStart & "Z" & ZMachCoordStart			While(IsMoving())			Wend		ElseIf (Boring = 0) Then			Code "G53 G00 X"&(GetABSPosition(Xaxis)+40)			While(IsMoving())			Wend			Code "G53 G00 Z"&(GetABSPosition(Zaxis)-35)			While(IsMoving())			Wend			XPushTo = GetDro(0) - 5000			Code "G31 X" & XPushTo &" F200"			While(IsMoving())			Wend			Code "G53 G00 X"&(GetABSPosition(Xaxis)+2)			While(IsMoving())			Wend			Code "G31 X" & XPushTo &" F5"			While(IsMoving())			Wend			SetToolX(0.0000)			DROXForX = 2000+Tool			DROZForX = 2100+Tool			DROForBoring = 2200+Tool			SetUserDRO(DROXForX, GetABSPosition(Xaxis))			SetUserDRO(DROZForX, GetABSPosition(Zaxis))			SetUserDRO(DROForBoring, 0)			XOffset = GetUserDRO(DROXForX)-ProbeOriginZ-20			SetToolParam(Tool, XOffsetParam, XOffset)			Code "G53 G00 X"&(GetABSPosition(Xaxis)+25)			While(IsMoving())			Wend			Code "G53 G00 Z"&(GetABSPosition(Zaxis)+25)			While(IsMoving())			Wend			Code "G53G00 X" & XMachCoordStart & "Z" & ZMachCoordStart			While(IsMoving())			Wend		Else			Message "Tool type not selected"			End		End If		''		Sleep(500)		Message "Probe closing..."		Call SetCsmioOutEx(OutProbeClose, True)		Sleep(5200)		Call SetCsmioOutEx(OutProbeClose, False)		Message "Probe Closed"	ElseIf (MachMsgReturnNo) Then		Message "Please set tool atleast 15cm to avoid breaking tool or probe."		End	Else		Message "No option selected."		End	End IfEnd SubPublic Sub SwCaseReverse(Comb)	Dim Namba	Select Case Comb		Case "0000"			Namba = 1			Message "Tool 1 Selected 0000"		Case "0001"			Namba = 2			Message "Tool 2 Selected 0001"		Case "0011"			Namba = 3			Message "Tool 3 Selected 0011"		Case "0010"			Namba = 4			Message "Tool 4 Selected 0010"		Case "1010"			Namba = 5			Message "Tool 5 Selected 1010"		Case "1011"			Namba = 6			Message "Tool 6 Selected 1011"		Case "1111"			Namba = 7			Message "Tool 7 Selected 1111"		Case "0111"			Namba = 8			Message "Tool 8 Selected 0111"		Case "0110"			Namba = 9			Message "Tool 9 Selected 0110"		Case "1110"			Namba = 10			Message "Tool 10 Selected 1110"		Case "1100"			Namba = 11			Message "Tool 11 Selected 1100"		Case "0100"			Namba = 12			Message "Tool 12 Selected 0100"		Case "0101"			Namba = 13			Message "Tool 13 Selected 0101"		Case "1101"			Namba = 14			Message "Tool 14 Selected 1101"		Case "1001"			Namba = 15			Message "Tool 15 Selected 1001"		Case "1000"			Namba = 16			Message "Tool 16 Selected 1000"		Case Else			Message "Tool Out of Range"			Sleep(50)			End	End Select	SwCaseReverse = Namba  End SubSub GetCombination()	Dim Comb	Comb = ""	If(GetCsmioIn(InTool1) = False) Then		Comb =  Comb + "0"	Else		Comb =  Comb + "1"	End If	If(GetCsmioIn(InTool2) = False) Then		Comb =  Comb + "0"	Else		Comb =  Comb + "1"	End If	If(GetCsmioIn(InTool3) = False) Then		Comb =  Comb + "0"	Else		Comb =  Comb + "1"	End If	If(GetCsmioIn(InTool4) = False) Then		Comb =  Comb + "0"	Else		Comb =  Comb + "1"	End If	GetCombination = CombEnd SubPublic Function GetCsmioIn(n As Integer) As Boolean	Dim reg As Integer	If(n<16) Then		reg = 90	Else		reg = 91		n = n-16	End If	If(GetInBit(reg, n)) Then		GetCsmioIn = true	Else		GetCsmioIn = False	End If	Exit FunctionEnd FunctionPublic Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(90, n)	Else		ResetOutBit(90, n)	End IfEnd SubPublic Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)	If(state) Then		SetOutBit(100, n)	Else		ResetOutBit(100, n)	End IfEnd Sub            
+If (GetOEMLED(809) Or GetOEMLED(807)) Then
+	Message "Please Home Machine First"
+	End
+Else
+End If
+
+Const InTool1 = 12
+OutProbeClose = 1
+Const InTool2 = 13
+Const InTool3 = 14
+Const InTool4 = 15
+Const ProbeOpen = 23
+ProbeOriginX = -250
+ProbeOriginZ = -250
+OpenProbe = 0
+Xaxis = 0 
+Zaxis = 2
+XOffsetParam = 3
+ZOffsetParam = 4
+MachMsgTypeYesNo = 4
+MachMsgReturnYes = 6 
+MachMsgReturnNo = 7
+Comb = GetCombination()
+TNum = SwCaseReverse(Comb)
+SetCurrentTool(TNum)
+Tool = GetCurrentTool()
+
+''Call StartProbe()
+
+''Call looper(2201)
+''Message "X Offset" & GetUserDRO(2004)-ProbeOriginX & "Z Offset" & GetUserDRO(1904)-ProbeOriginZ
+Call GoToProbePosition()
+
+Sub GoToProbePosition()
+	XPositionStartDRO = 1800+Tool
+	ZPositionStartDRO = 1900+Tool
+	XPositionStart = GetUserDRO(XPositionStartDRO)
+	ZPositionStart = GetUserDRO(ZPositionStartDRO)
+	If(XPositionStart = 0 Or ZPositionStart = 0) Then
+		Message "Tool has no preset position. Do this for new/changed/unset tools or changed tools"
+	Else 
+		Code "G53 G00 Z"&(ZPositionStart+70)
+		Code "G53 G00 X"&XPositionStart
+		While(IsMoving())
+		Wend
+		''MachMsg("Done to probe origin", "Waduheck", 0)
+		Call StartProbe()
+	End If
+End Sub
+
+Sub looper(start)
+	mytarget = start+15
+	For i = start To mytarget
+        	Message i & "m" & GetUserDRO(i)
+        	sleep(1000)
+	Next i
+End Sub
+
+Sub StartProbe()
+	Response = MachMsg ("Have you set the tool atleast 15cm from the probe?", "Alert", MachMsgTypeYesNo)
+	If(Response = MachMsgReturnYes) Then
+		Message "Starting probe for tool " & Tool & "..."
+		If(GetCsmioIn(ProbeOpen) = False) Then
+			Call SetCsmioOutEx(OpenProbe, True)
+			While(GetCsmioIn(ProbeOpen) = False)
+			Wend
+			Call SetCsmioOutEx(OpenProbe, False)
+			Sleep(300)
+		Else
+		End If
+		''Message "Machine X " & GetABSPosition(Xaxis) & " Machine Z" & GetABSPosition(Zaxis)
+		XCoordStart = GetDro(0)
+		ZCoordStart = GetDro(2)
+		XMachCoordStart = GetABSPosition(Xaxis)
+		ZMachCoordStart = GetABSPosition(Zaxis)
+		''Do Z
+		ZPushTo = ZCoordStart - 5000
+		MyGCode = "G31 X" & XCoordStart & " Z" & ZPushTo &" F200"
+		Code MyGCode
+		While(IsMoving())
+		Wend
+		Code "G53 G00 Z"&(GetABSPosition(Zaxis)+2)
+		While(IsMoving())
+		Wend
+		Code "G31 X" & XCoordStart & " Z" & ZPushTo &" F5"
+		While(IsMoving())
+		Wend
+		SetToolZ(0.0000)
+		DROXForZ = 1800+Tool
+		DROZForZ = 1900+Tool
+		SetUserDRO(DROXForZ, GetABSPosition(Xaxis))
+		SetUserDRO(DROZForZ, GetABSPosition(Zaxis))
+		ZOffset = GetUserDRO(DROZForZ)-ProbeOriginZ
+		SetToolParam(Tool, ZOffsetParam, ZOffset) 
+		Code "G53 G00 Z"&(GetABSPosition(Zaxis)+15)
+		While(IsMoving())
+		Wend
+		''Do X
+		Boring = GetUserDRO((2200+Tool))
+		''Response = MachMsg ("Is this a boring tool?", "Alert", MachMsgTypeYesNo)
+		If(Boring = 1) Then
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)-40)
+			While(IsMoving())
+			Wend
+			Code "G53 G00 Z"&(GetABSPosition(Zaxis)-35)
+			While(IsMoving())
+			Wend
+			XPushTo = GetDro(0) + 5000
+			Code "G31 X" & XPushTo &" F200"
+			While(IsMoving())
+			Wend
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)-3)
+			While(IsMoving())
+			Wend
+			Code "G31 X" & XPushTo &" F5"
+			While(IsMoving())
+			Wend
+			SetToolX(0.0000)
+			DROXForX = 2000+Tool
+			DROZForX = 2100+Tool
+			DROForBoring = 2200+Tool
+			SetUserDRO(DROXForX, GetABSPosition(Xaxis))
+			SetUserDRO(DROZForX, GetABSPosition(Zaxis))
+			SetUserDRO(DROForBoring, 1)
+			XOffset = GetUserDRO(DROXForX)-ProbeOriginZ+20
+			SetToolParam(Tool, XOffsetParam, XOffset) 
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)-25)
+			While(IsMoving())
+			Wend
+			Code "G53 G00 Z"&(GetABSPosition(Zaxis)+25)
+			While(IsMoving())
+			Wend
+			Code "G53G00 X" & XMachCoordStart & "Z" & ZMachCoordStart
+			While(IsMoving())
+			Wend
+		ElseIf (Boring = 0) Then
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)+40)
+			While(IsMoving())
+			Wend
+			Code "G53 G00 Z"&(GetABSPosition(Zaxis)-35)
+			While(IsMoving())
+			Wend
+			XPushTo = GetDro(0) - 5000
+			Code "G31 X" & XPushTo &" F200"
+			While(IsMoving())
+			Wend
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)+2)
+			While(IsMoving())
+			Wend
+			Code "G31 X" & XPushTo &" F5"
+			While(IsMoving())
+			Wend
+			SetToolX(0.0000)
+			DROXForX = 2000+Tool
+			DROZForX = 2100+Tool
+			DROForBoring = 2200+Tool
+			SetUserDRO(DROXForX, GetABSPosition(Xaxis))
+			SetUserDRO(DROZForX, GetABSPosition(Zaxis))
+			SetUserDRO(DROForBoring, 0)
+			XOffset = GetUserDRO(DROXForX)-ProbeOriginZ-20
+			SetToolParam(Tool, XOffsetParam, XOffset)
+			Code "G53 G00 X"&(GetABSPosition(Xaxis)+25)
+			While(IsMoving())
+			Wend
+			Code "G53 G00 Z"&(GetABSPosition(Zaxis)+25)
+			While(IsMoving())
+			Wend
+			Code "G53G00 X" & XMachCoordStart & "Z" & ZMachCoordStart
+			While(IsMoving())
+			Wend
+		Else
+			Message "Tool type not selected"
+			End
+		End If
+		''
+		Sleep(500)
+		Message "Probe closing..."
+		Call SetCsmioOutEx(OutProbeClose, True)
+		Sleep(5200)
+		Call SetCsmioOutEx(OutProbeClose, False)
+		Message "Probe Closed"
+	ElseIf (MachMsgReturnNo) Then
+		Message "Please set tool atleast 15cm to avoid breaking tool or probe."
+		End
+	Else
+		Message "No option selected."
+		End
+	End If
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Public Sub SwCaseReverse(Comb)
+	Dim Namba
+	Select Case Comb
+		Case "0000"
+			Namba = 1
+			Message "Tool 1 Selected 0000"
+		Case "0001"
+			Namba = 2
+			Message "Tool 2 Selected 0001"
+		Case "0011"
+			Namba = 3
+			Message "Tool 3 Selected 0011"
+		Case "0010"
+			Namba = 4
+			Message "Tool 4 Selected 0010"
+		Case "1010"
+			Namba = 5
+			Message "Tool 5 Selected 1010"
+		Case "1011"
+			Namba = 6
+			Message "Tool 6 Selected 1011"
+		Case "1111"
+			Namba = 7
+			Message "Tool 7 Selected 1111"
+		Case "0111"
+			Namba = 8
+			Message "Tool 8 Selected 0111"
+		Case "0110"
+			Namba = 9
+			Message "Tool 9 Selected 0110"
+		Case "1110"
+			Namba = 10
+			Message "Tool 10 Selected 1110"
+		Case "1100"
+			Namba = 11
+			Message "Tool 11 Selected 1100"
+		Case "0100"
+			Namba = 12
+			Message "Tool 12 Selected 0100"
+		Case "0101"
+			Namba = 13
+			Message "Tool 13 Selected 0101"
+		Case "1101"
+			Namba = 14
+			Message "Tool 14 Selected 1101"
+		Case "1001"
+			Namba = 15
+			Message "Tool 15 Selected 1001"
+		Case "1000"
+			Namba = 16
+			Message "Tool 16 Selected 1000"
+		Case Else
+			Message "Tool Out of Range"
+			Sleep(50)
+			End
+	End Select
+	SwCaseReverse = Namba  
+End Sub
+
+Sub GetCombination()
+	Dim Comb
+	Comb = ""
+	If(GetCsmioIn(InTool1) = False) Then
+		Comb =  Comb + "0"
+	Else
+		Comb =  Comb + "1"
+	End If
+	If(GetCsmioIn(InTool2) = False) Then
+		Comb =  Comb + "0"
+	Else
+		Comb =  Comb + "1"
+	End If
+
+	If(GetCsmioIn(InTool3) = False) Then
+		Comb =  Comb + "0"
+	Else
+		Comb =  Comb + "1"
+	End If
+
+	If(GetCsmioIn(InTool4) = False) Then
+		Comb =  Comb + "0"
+	Else
+		Comb =  Comb + "1"
+	End If
+	GetCombination = Comb
+End Sub
+
+Public Function GetCsmioIn(n As Integer) As Boolean
+	Dim reg As Integer
+	If(n<16) Then
+		reg = 90
+	Else
+		reg = 91
+		n = n-16
+	End If
+	If(GetInBit(reg, n)) Then
+		GetCsmioIn = true
+	Else
+		GetCsmioIn = False
+	End If
+	Exit Function
+End Function
+
+Public Sub SetCsmioOut(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(90, n)
+	Else
+		ResetOutBit(90, n)
+	End If
+End Sub
+
+Public Sub SetCsmioOutEx(ByVal n As Integer, ByVal state As Boolean)
+	If(state) Then
+		SetOutBit(100, n)
+	Else
+		ResetOutBit(100, n)
+	End If
+End Sub
+            
